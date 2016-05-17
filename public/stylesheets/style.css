@@ -20,6 +20,6 @@ a {
   border: solid 5px #FF0000;
 }
 
-#playng {
+.memo[data-playing="true"] {
 	background: #555;
 }
