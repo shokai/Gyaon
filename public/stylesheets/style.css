@@ -1,0 +1,25 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+.memo {
+  width: 100px;
+  height: 100px;
+  float: left;
+  margin: 10px;
+  background: #EEE;
+  list-style: none;
+}
+
+.onplay {
+  border: solid 5px #FF0000;
+}
+
+#playng {
+	background: #555;
+}

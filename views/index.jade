@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  h1= title
+  ul.memos
+    each file in fileList
+      li.memo=file
+        audio(src='./mp3/#{file}')
+
+block scripts
+  script(src='javascripts/script.js')
