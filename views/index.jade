@@ -2,14 +2,14 @@ extends layout
 
 block content
   h1= title
-  button#rec="rec"
-  ul.memos
+  button#recordButton(disabled="disabled")="rec"
+  ul#memos
     each file in fileList
       li.memo=file
-        audio(src='./mp3/#{file}')
+        audio(src='/mp3/#{file}')
 
 block scripts
   script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js')
   script(src='javascripts/recorder.js')
-  script(src='javascripts/exportwav.js')
+  script(src='javascripts/exporter.js')
   script(src='javascripts/script.js')
