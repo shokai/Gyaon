@@ -59,7 +59,7 @@ $(function() {
       contentType: false
     }).done(function(done) {
       console.log(done);
-      var memo = $("<li class=\"memo\">" + done.file + "<audio src=\"/mp3/" + done.file + "\" /></li>");
+      var memo = $("<li class=\"memo\">" + done.file + "<audio src=\"" + done.url + "\" /></li>");
       $("#memos").prepend(memo);
     }).fail(function(e) {
       alert("export failed");

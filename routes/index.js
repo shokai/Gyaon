@@ -4,27 +4,61 @@ var fs = require('fs');
 var path = require('path');
 var formidable = require('formidable');
 var debug = require("debug")("index");
+var crypto = require('crypto');
+var cookie = require('cookie');
+var AWS = require('aws-sdk');
+
+AWS.config.loadFromPath('.config.json');
+var bucket = new AWS.S3({params: {Bucket: 'gyaon'}});
+
+var gyaonId = 0;
+var s3EndPoint = 'https://s3-us-west-2.amazonaws.com/gyaon/';
+
+var md5_hex = function(src) {
+  var md5 = crypto.createHash('md5');
+  md5.update(src, 'utf8');
+  return md5.digest('hex');
+}
+
+//create tmp folder
 var promiseUploadDir = function() {
-    return new Promise(function(resolve, reject) {
-      var dir = path.resolve("./public/mp3");
-      fs.mkdir(dir, function(err) {
-        err ? resolve(err) : resolve();
-      });
+  return new Promise(function(resolve, reject) {
+    var dir = path.resolve("./public/tmp");
+    fs.mkdir(dir, function(err) {
+      err ? resolve(err) : resolve();
     });
-  }
-  /* GET home page. */
+  });
+}
+
+/* GET home page. */
 router.get('/', function(req, res, next) {
-  promiseUploadDir().then(function() {
-    fs.readdir('./public/mp3', function(err, files) {
-      if (err) throw err;
-      res.render('index', {
-        title: 'Gyaon',
-        fileList: files.filter(function(f) {
-          return path.extname(f).match(/wav|mp3/)
-        })
-      });
+  //cookie
+  var parsedCookie = cookie.parse(String(req.headers.cookie));
+  gyaonId = parsedCookie.gyaonId;
+  debug("gyaonId : " + gyaonId);
+  if(typeof gyaonId === "undefined"){
+    var serializedCookie = cookie.serialize('gyaonId', md5_hex(String(Date.now())), {
+      expires: new Date(2020, 1, 1)
     });
-  }).catch(debug);
+    debug("new gyaonId : " + serializedCookie);
+    res.setHeader('Set-Cookie', serializedCookie);
+  }
+
+  //get file list in s3
+  var params = {Delimiter: '/', Prefix: gyaonId + '/'}
+  bucket.listObjects(params, function(err, data){
+    if(err) throw err;
+
+    var files = [];
+    data.Contents.forEach(function(file){
+      files.push({name: file.Key.replace(gyaonId + '/', ''), url: s3EndPoint + file.Key});
+    });
+    debug(files);
+    res.render('index', {
+      title: 'Gyaon',
+      fileList: files
+    });
+  });
 });
 
 /* 音声データ受け取り */
@@ -32,22 +66,38 @@ router.post('/upload', function(req, res) {
   promiseUploadDir().then(function() {
     var form = new formidable.IncomingForm();
     form.encoding = "utf-8";
-    form.uploadDir = "./public/mp3";
+    form.uploadDir = "./public/tmp";
     form.multiples = false;
-    var fileName;
+
     form.on("file", function(name, file) {
       var fn = path.basename(file.path) + ".wav";
-      fs.rename(file.path, form.uploadDir + "/" + fn);
-      fileName = fn;
-    });
-    form.on("end", function() {
-      res.status(200).set("Content-Type", "application/json").json({
-        file: fileName
-      }).end();
+
+      //upload to s3
+      fs.readFile(file.path, function(err, data){
+        if(err) throw err;
+        var keyName = gyaonId + "/" + fn
+        var params = {Key: keyName, ContentType: file.type, Body: data};
+
+        bucket.upload(params, function(err, data) {
+          if (err)
+          console.log(err)
+          else
+          var fileUrl = data.Location;
+          debug("Successfully uploaded data to " + fileUrl);
+          res.status(200).set("Content-Type", "application/json").json({
+            file: fn,
+            url: fileUrl
+          }).end();
+
+          //delete tmp file
+          fs.unlink(file.path, function(err){
+            if(err) throw err;
+          });
+        });
+      });
     });
     form.parse(req);
   }).catch(debug)
 });
-
 
 module.exports = router;

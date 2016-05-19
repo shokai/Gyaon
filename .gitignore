@@ -1,4 +1,7 @@
 public/mp3
+public/tmp
 node_modules/
 .DS_Store
+.config.json
 *.swp
+*.log

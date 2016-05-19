@@ -5,8 +5,8 @@ block content
   button#recordButton(disabled="disabled")="rec"
   ul#memos
     each file in fileList
-      li.memo=file
-        audio(src='/mp3/#{file}')
+      li.memo=file.name
+        audio(src=file.url)
 
 block scripts
   script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js')
