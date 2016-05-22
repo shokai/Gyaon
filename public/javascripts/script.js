@@ -1,7 +1,5 @@
 $(function() {
-  navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia ||
-    navigator.mozGetUserMedia ||
-    navigator.msGetUserMedia);
+  var getUserMedia = UserMediaResolver.getUserMedia;
   var $recordButton = $("#recordButton");
   var permissionResolved = false;
   var audioContext = new AudioContext();
@@ -9,10 +7,10 @@ $(function() {
   var recorder = new AudioRecorder({
     audioContext: audioContext
   });
-  var localMediaStream;
+  var stream;
   // 録音のパーミッションをリクエストする
   var requestPermission = function(success, fail) {
-    navigator.getUserMedia({
+    getUserMedia({
       video: false,
       audio: true
     }, success, fail);
@@ -25,19 +23,20 @@ $(function() {
       } else {
         $recordButton.attr("disabled", "disabled");
       }
-    }
+    };
     // マイクのパーミッションをリクエスト
   requestPermission(function(localMediaStream) {
     setPermissionResolved(true);
+    stream = localMediaStream;
   }, function(err) {
     setPermissionResolved(false);
     console.error(err);
   });
   // 録音ボタン
   $recordButton.mousedown(function(e) {
-    requestPermission(function(localMediaStream) {
-      recorder.start(localMediaStream);
-    }, alert);
+    if (permissionResolved) {
+      recorder.start(stream);
+    }
   }).mouseup(function(e) {
     recorder.stop();
     var src = audioContext.createBufferSource();
