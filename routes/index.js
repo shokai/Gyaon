@@ -8,7 +8,9 @@ var crypto = require('crypto');
 var cookie = require('cookie');
 var AWS = require('aws-sdk');
 
-AWS.config.loadFromPath('.config.json');
+AWS.config.accessKeyId = process.env.accessKeyId;
+AWS.config.secretAccessKey = process.env.secretAccessKey;
+AWS.config.region = process.env.region;
 var bucket = new AWS.S3({params: {Bucket: 'gyaon'}});
 
 var gyaonId = 0;
