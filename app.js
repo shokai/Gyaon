@@ -21,6 +21,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+var forceSSL = require('express-force-ssl')
+if (process.env.FORCE_SSL === 'true') {
+  app.use(forceSSL)
+}
+
 app.use('/', routes);
 app.use('/users', users);
 
